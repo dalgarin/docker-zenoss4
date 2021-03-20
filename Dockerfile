@@ -4,7 +4,7 @@
 ############################################################
 
 # set base image debian wheezy
-FROM debian:wheezy
+FROM debian:jessie
 
 # file maintainer author
 MAINTAINER brendan jocson <brendan@jocson.eu>
@@ -72,30 +72,35 @@ RUN \
 ## init build env & install apt deps
     /usr/sbin/groupadd -g 999 zenoss \
     && /usr/sbin/useradd -m -u 999 -g 999 -s /bin/bash zenoss \
-    && /usr/bin/apt-get update \
-    && /usr/bin/apt-get -y --no-install-recommends install ${ZENOSS_BUILD_DEPS_DEV} ${ZENOSS_BUILD_DEPS_EXT} \
+    && /usr/bin/apt-get update
+RUN \
+    /usr/bin/apt-get -y --no-install-recommends install ${ZENOSS_BUILD_DEPS_DEV} ${ZENOSS_BUILD_DEPS_EXT} \
     && /bin/cp /etc/apt/sources.list /etc/apt/sources.list.org \
-    && /bin/sed 's/wheezy/testing/g' /etc/apt/sources.list >> /etc/apt/sources.list \
-    && /usr/bin/apt-get update \
-    && /usr/bin/apt-get -y --no-install-recommends -t testing install ${ZENOSS_BUILD_DEPS_TESTING} \
+    && /bin/sed 's/wheezy/testing/g' /etc/apt/sources.list >> /etc/apt/sources.list 
+RUN \
+    /usr/bin/apt-get update \
+    && /usr/bin/apt-get -y --no-install-recommends install ${ZENOSS_BUILD_DEPS_TESTING} \
     && /bin/cp /etc/apt/sources.list.org /etc/apt/sources.list \
-    && /usr/bin/apt-get update \
+    && /usr/bin/apt-get update
+RUN \
 ## download all the things!
-    && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/src/snmp-mibs-downloader_1.1_all.deb -O ${BUILD_SRC}/snmp-mibs-downloader_1.1_all.deb \
+    /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/src/snmp-mibs-downloader_1.1_all.deb -O ${BUILD_SRC}/snmp-mibs-downloader_1.1_all.deb \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/src/zenoss-core-425-2108_03c_amd64.deb.tar.gz.00 -O ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz.00 \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/src/zenoss-core-425-2108_03c_amd64.deb.tar.gz.01 -O ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz.01 \
     && /bin/cat ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz.00 ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz.01 > ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/bin/docker-entrypoint.sh -O /usr/local/bin/docker-entrypoint.sh \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/etc/insserv/overrides/zenoss -O /etc/insserv/overrides/zenoss \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/etc/init.d/zenoss -O /etc/init.d/zenoss \
-    && /bin/tar zxvf ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz -C ${BUILD_SRC}/ \
+    && /bin/tar zxvf ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb.tar.gz -C ${BUILD_SRC}/ 
+RUN \
 ## install all the things!
-    && /usr/bin/dpkg -i ${BUILD_SRC}/snmp-mibs-downloader_1.1_all.deb \
+    /usr/bin/dpkg -i ${BUILD_SRC}/snmp-mibs-downloader_1.1_all.deb \
     && /usr/bin/dpkg -i ${BUILD_SRC}/zenoss-core-425-2108_03c_amd64.deb \
     && /usr/bin/wget --no-check-certificate https://raw.githubusercontent.com/dalgarin/docker-misc/master/init_fs/usr/local/zenoss/etc/zeneventserver.conf -O ${ZENHOME}/etc/zeneventserver.conf \
-    && /usr/bin/apt-get -f install \
+    && /usr/bin/apt-get -f install
+RUN \
 ## os cleanup/conditioning
-    && /bin/chown -R zenoss:zenoss ${ZENOSSHOME} \
+    /bin/chown -R zenoss:zenoss ${ZENOSSHOME} \
     && /bin/chown -R zenoss:zenoss ${ZENHOME} \
     && /bin/ln -s /usr/local/zenoss /opt \
     && /bin/ln -s libnetsnmp.so.15 /usr/lib/libnetsnmp.so \
@@ -107,26 +112,29 @@ RUN \
     && /usr/bin/touch ${ZENHOME}/var/Data.fs \
     && /bin/sed -i 's/mibs/#mibs/g' /etc/snmp/snmp.conf \
     && /usr/bin/touch ${ZENHOME}/etc/DAEMONS_TXT_ONLY \
-    && /usr/bin/printf ${ZEN_DEF_DAEMONS} > ${ZENHOME}/etc/daemons.txt \
+    && /usr/bin/printf ${ZEN_DEF_DAEMONS} > ${ZENHOME}/etc/daemons.txt
+RUN \
 ## fix ownerships and permissions
-    && /bin/chmod -c 755 /etc/init.d/zenoss \
+    /bin/chmod -c 755 /etc/init.d/zenoss \
     && /bin/chmod -c 755 /usr/local/bin/docker-entrypoint.sh \
     && /bin/chown -c root:zenoss ${ZENHOME}/bin/pyraw \
     && /bin/chown -c root:zenoss ${ZENHOME}/bin/zensocket \
     && /bin/chown -c root:zenoss ${ZENHOME}/bin/nmap \
     && /bin/chmod -c 04750 ${ZENHOME}/bin/pyraw \
     && /bin/chmod -c 04750 ${ZENHOME}/bin/zensocket \
-    && /bin/chmod -c 04750 ${ZENHOME}/bin/nmap \
+    && /bin/chmod -c 04750 ${ZENHOME}/bin/nmap
+RUN \
 ## conditioning for docker service instances
-    && /bin/sed -i 's/zodb-host localhost/zodb-host zenoss4-mariadb/g' ${ZENHOME}/etc/global.conf \
+    /bin/sed -i 's/zodb-host localhost/zodb-host zenoss4-mariadb/g' ${ZENHOME}/etc/global.conf \
     && /bin/sed -i 's/host localhost/host zenoss4-mariadb/g' ${ZENHOME}/etc/zodb_db_main.conf \
     && /bin/sed -i 's/host localhost/host zenoss4-mariadb/g' ${ZENHOME}/etc/zodb_db_session.conf \
     && /bin/sed -i 's/zep-host localhost/zep-host zenoss4-mariadb/g' ${ZENHOME}/etc/global.conf \
     && /bin/sed -i 's/amqphost localhost/amqphost zenoss4-rabbitmq/g' ${ZENHOME}/etc/global.conf \
     && /bin/sed -i 's/zodb-cacheservers 127.0.0.1:11211/zodb-cacheservers zenoss4-memcached:11211/g' ${ZENHOME}/etc/global.conf \
-    && /bin/sed -i 's/127.0.0.1:11211/zenoss4-memcached:11211/g' ${ZENHOME}/etc/zope.conf \
+    && /bin/sed -i 's/127.0.0.1:11211/zenoss4-memcached:11211/g' ${ZENHOME}/etc/zope.conf
+RUN \
 ## build cleanup
-    && for lf in ${ZENHOME}/log/*.log; do /usr/bin/truncate -s 0 $lf; done \
+    for lf in ${ZENHOME}/log/*.log; do /usr/bin/truncate -s 0 $lf; done \
     && /bin/rm -rf ${ZENOSSHOME}/zenoss425-srpm_install ${ZENOSSHOME}/z*.sql ${ZENOSSHOME}/.bash_history ${ZENOSSHOME}/.viminfo ${ZENOSSHOME}/.gnupg ${ZENOSSHOME}/.subversion ${ZENHOME}/etc/*.example ${ZENHOME}/log/z*-stdio.*.log ${BUILD_SRC}/*.deb ${BUILD_SRC}/*.tar.gz* /usr/share/locale/* /var/cache/debconf/*-old /usr/share/doc/* /var/lib/apt/* \
     && /usr/bin/apt-get -y --auto-remove purge ${ZENOSS_BUILD_DEPS_EXT} \
     && /usr/bin/apt-get -y autoremove \
