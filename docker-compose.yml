@@ -68,7 +68,7 @@ services:
       - back-tier
 
   zenoss4-core:
-    image: mcroth/docker-zenoss4 
+    image: clokendagger77/docker-zenoss4 
     container_name: zenoss4-core
     hostname: zenoss4-core
 #    volumes:

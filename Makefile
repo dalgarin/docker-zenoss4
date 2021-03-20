@@ -1,5 +1,5 @@
 include .env_make
-NS = mcroth
+NS = clokendagger77
 VERSION ?= latest
 
 REPO = docker-zenoss4
